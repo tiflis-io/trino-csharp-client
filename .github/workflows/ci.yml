@@ -12,14 +12,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up dotnet
-        uses: actions/setup-dotnet@v3
-      - name: Set up msbuild
-        uses: microsoft/setup-msbuild@v2
-      - name: Set up nuget
-        uses: nuget/setup-nuget@v2
+        uses: actions/setup-dotnet@v4
         with:
-          nuget-version: '5.x'
-      - name: Nuget restore
-        run: nuget restore trino-csharp/TrinoDriver.sln
-      - name: Run msbuild
-        run: msbuild trino-csharp/TrinoDriver.sln   
+          dotnet-version: '9.x'
+          source-url: https://nuget.pkg.github.com/tiflis-io/index.json
+        env:
+          NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - name: Build
+        run: dotnet build -c Release ./trino-csharp/TrinoDriver.sln
+      - name: Pack
+        run: |
+          dotnet pack --configuration Release ./trino-csharp/Trino.Client.Auth/Trino.Client.Auth.csproj --version-suffix 1.0.0
+          dotnet pack --configuration Release ./trino-csharp/Trino.Data.ADO/Trino.Data.ADO.csproj --version-suffix 1.0.0
+          dotnet pack --configuration Release ./trino-csharp/Trino.Client/Trino.Client.csproj --version-suffix 1.0.0
+          dotnet nuget push ./trino-csharp/**/bin/Release/*.nupkg
