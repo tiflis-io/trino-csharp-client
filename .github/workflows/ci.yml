@@ -26,3 +26,4 @@ jobs:
           dotnet pack --configuration Release ./trino-csharp/Trino.Data.ADO/Trino.Data.ADO.csproj --version-suffix 1.0.0
           dotnet pack --configuration Release ./trino-csharp/Trino.Client/Trino.Client.csproj --version-suffix 1.0.0
           dotnet nuget push ./trino-csharp/**/bin/Release/*.nupkg
+
