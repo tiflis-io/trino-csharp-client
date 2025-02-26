@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Trino.Client.Logging;
 using System.Net.Http.Headers;
+using Trino.Client.Utils;
 
 namespace Trino.Client
 {
@@ -61,7 +62,7 @@ namespace Trino.Client
         protected internal async Task<T> GetAsync(Uri uri)
         {
             string resourceContent = await GetAsync(uri, defaultExpectedResponseCodes).ConfigureAwait(false);
-            T deserializedResult = JsonConvert.DeserializeObject<T>(resourceContent);
+            T deserializedResult = JsonConvert.DeserializeObject<T>(resourceContent, DefaultJsonSerializerOptions.Instance);
             return deserializedResult;
         }
 

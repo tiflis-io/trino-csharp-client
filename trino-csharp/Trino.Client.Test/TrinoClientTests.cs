@@ -1,8 +1,9 @@
 using Trino.Client.Types;
-
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
+using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
+using Newtonsoft.Json.Linq;
 using Trino.Data.ADO.Server;
 using Trino.Data.ADO.Client;
 
@@ -21,9 +22,11 @@ namespace Trino.Client.Test
                 using (TrinoConnection tc = new(properties))
                 {
                     CancellationTokenSource cancellationTokenSource = new();
-                    using (TrinoCommand trinoCommand = new(tc, "select timestamp '2024-01-02 01:02:03.456' as ts, \"timestamp with time zone\" '2024-01-02 01:02:03.456 +05:00' as tz, cast('2024-01-02 01:02:03.456789 +05:00' as timestamp(6) with time zone) as tz6"))
+                    using (TrinoCommand trinoCommand = new(tc,
+                               "select timestamp '2024-01-02 01:02:03.456' as ts, \"timestamp with time zone\" '2024-01-02 01:02:03.456 +05:00' as tz, cast('2024-01-02 01:02:03.456789 +05:00' as timestamp(6) with time zone) as tz6"))
                     {
-                        TrinoDataReader reader = (TrinoDataReader)trinoCommand.ExecuteReader(CommandBehavior.CloseConnection);
+                        TrinoDataReader reader =
+                            (TrinoDataReader)trinoCommand.ExecuteReader(CommandBehavior.CloseConnection);
                         reader.Read();
                         DateTime col1DateTime = reader.GetDateTime(0);
                         Assert.AreEqual(DateTime.Parse("2024-01-02 01:02:03.456"), col1DateTime);
@@ -51,7 +54,8 @@ namespace Trino.Client.Test
             {
                 TrinoConnectionProperties properties = server.GetConnectionProperties();
                 properties.Catalog = "tpch";
-                properties.SessionProperties = new Dictionary<string, string>() { { "query_cache_enabled", "true" }, { "query_cache_ttl", "1h" } };
+                properties.SessionProperties = new Dictionary<string, string>()
+                    { { "query_cache_enabled", "true" }, { "query_cache_ttl", "1h" } };
 
                 using (TrinoConnection tc = new(properties))
                 {
@@ -76,7 +80,8 @@ namespace Trino.Client.Test
             {
                 TrinoConnectionProperties properties = server.GetConnectionProperties();
                 properties.Catalog = "tpch";
-                properties.SessionProperties = new Dictionary<string, string>() { { "query_cache_enabled", "true" }, { "query_cache_ttl", "1h" } };
+                properties.SessionProperties = new Dictionary<string, string>()
+                    { { "query_cache_enabled", "true" }, { "query_cache_ttl", "1h" } };
                 string all_types = $@"select * from tpch.sf100000.customer limit 2";
 
                 using (TrinoConnection tc = new(properties))
@@ -95,6 +100,7 @@ namespace Trino.Client.Test
                         Assert.AreEqual(tableWithSchema.Columns.Count, tableWithSchema2.Columns.Count);
                         Assert.AreEqual(tableWithSchema.Columns[0].ColumnName, tableWithSchema2.Columns[0].ColumnName);
                     }
+
                     Console.WriteLine("Duration of cancel query: " + stopwatch.ElapsedMilliseconds + "ms");
                 }
             }
@@ -116,10 +122,12 @@ namespace Trino.Client.Test
 
                     using (TrinoConnection tc = new(properties))
                     {
-                        using (IDbCommand trinoCommand = new TrinoCommand(tc, all_types, TimeSpan.FromSeconds(10), null, null))
+                        using (IDbCommand trinoCommand =
+                               new TrinoCommand(tc, all_types, TimeSpan.FromSeconds(10), null, null))
                         {
                             IDataReader idr = trinoCommand.ExecuteReader();
-                            while (idr.Read()) {
+                            while (idr.Read())
+                            {
                                 Console.WriteLine("Read 1 row");
                             }
                         }
@@ -137,6 +145,7 @@ namespace Trino.Client.Test
                             foundTimeout = true;
                         }
                     }
+
                     Assert.IsTrue(foundTimeout);
                 }
             }
@@ -202,7 +211,6 @@ namespace Trino.Client.Test
 
                 try
                 {
-
                     while (true)
                     {
                         using (TrinoConnection tc = new(properties))
@@ -218,14 +226,23 @@ namespace Trino.Client.Test
                 }
                 catch (Exception ae)
                 {
-                    Assert.AreEqual(ae.Message, "One or more errors occurred. (line 1:12: Cannot apply operator: varchar(1) = integer)");
+                    Assert.AreEqual(ae.Message,
+                        "One or more errors occurred. (line 1:12: Cannot apply operator: varchar(1) = integer)");
                 }
             }
         }
 
-        private readonly string[] columnColumnNames = ["TABLE_CATALOG", "TABLE_SCHEMA", "TABLE_NAME", "COLUMN_NAME", "ORDINAL_POSITION", "COLUMN_DEFAULT", "IS_NULLABLE", "DATA_TYPE"];
-        private readonly string[] availableSchemas = ["catalogs", "schemas", "schemata", "tables", "columns", "views", "functions", "sessions"];
-        private readonly string[] firstRowColumns = ["delta", "nyc", "request_by_region", "region", "1", "", "YES", "varchar"];
+        private readonly string[] columnColumnNames =
+        [
+            "TABLE_CATALOG", "TABLE_SCHEMA", "TABLE_NAME", "COLUMN_NAME", "ORDINAL_POSITION", "COLUMN_DEFAULT",
+            "IS_NULLABLE", "DATA_TYPE"
+        ];
+
+        private readonly string[] availableSchemas =
+            ["catalogs", "schemas", "schemata", "tables", "columns", "views", "functions", "sessions"];
+
+        private readonly string[] firstRowColumns =
+            ["delta", "nyc", "request_by_region", "region", "1", "", "YES", "varchar"];
 
         [TestMethod]
         public void TestGetSchema()
@@ -282,13 +299,16 @@ namespace Trino.Client.Test
                     {
                         trinoCommand.ExecuteNonQuery();
                     }
+
                     Assert.AreEqual(connection.ConnectionSession.Properties.Source, properties.Source);
                     connection.ConnectionSession.Properties.Source = "Archimedes";
                     using (TrinoCommand trinoCommand = new(connection, "USE tpch.sf10"))
                     {
                         trinoCommand.ExecuteNonQuery();
                     }
-                    using (TrinoCommand trinoCommand = new(connection, "SET SESSION hive.insert_existing_partitions_behavior = 'OVERWRITE'"))
+
+                    using (TrinoCommand trinoCommand = new(connection,
+                               "SET SESSION hive.insert_existing_partitions_behavior = 'OVERWRITE'"))
                     {
                         trinoCommand.ExecuteNonQuery();
                     }
@@ -296,8 +316,12 @@ namespace Trino.Client.Test
                     Assert.AreEqual(connection.ConnectionSession.Properties.Source, "Archimedes");
                     Assert.AreEqual(connection.ConnectionSession.Properties.Catalog, "tpch");
                     Assert.AreEqual(connection.ConnectionSession.Properties.Schema, "sf10");
-                    Assert.IsTrue(connection.ConnectionSession.Properties.Properties.ContainsKey("hive.insert_existing_partitions_behavior"));
-                    Assert.AreEqual(connection.ConnectionSession.Properties.Properties["hive.insert_existing_partitions_behavior"], "OVERWRITE");
+                    Assert.IsTrue(
+                        connection.ConnectionSession.Properties.Properties.ContainsKey(
+                            "hive.insert_existing_partitions_behavior"));
+                    Assert.AreEqual(
+                        connection.ConnectionSession.Properties.Properties["hive.insert_existing_partitions_behavior"],
+                        "OVERWRITE");
                 }
             }
         }
@@ -396,15 +420,18 @@ namespace Trino.Client.Test
 
                             Assert.AreEqual(typeof(TrinoBigDecimal), idr.GetValue(7).GetType());
                             Assert.AreEqual(new TrinoBigDecimal("678.12345"), idr.GetValue(7));
-                            Assert.AreEqual(new TrinoBigDecimal("678.12345").ToDecimal(), ((TrinoBigDecimal)idr.GetValue(7)).ToDecimal());
+                            Assert.AreEqual(new TrinoBigDecimal("678.12345").ToDecimal(),
+                                ((TrinoBigDecimal)idr.GetValue(7)).ToDecimal());
                             Assert.AreEqual("decimal_column", tableWithSchema.Columns[7].ToString());
 
                             Assert.AreEqual(typeof(TrinoBigDecimal), idr.GetValue(8).GetType());
-                            Assert.AreEqual(new TrinoBigDecimal("123456789000000000.123400500099999999"), idr.GetValue(8));
+                            Assert.AreEqual(new TrinoBigDecimal("123456789000000000.123400500099999999"),
+                                idr.GetValue(8));
                             Assert.AreEqual("big_decimal_column", tableWithSchema.Columns[8].ToString());
 
                             // Test big decimal extraction fails at this scale
-                            Assert.ThrowsException<OverflowException>(() => ((TrinoBigDecimal)idr.GetValue(8)).ToDecimal());
+                            Assert.ThrowsException<OverflowException>(() =>
+                                ((TrinoBigDecimal)idr.GetValue(8)).ToDecimal());
 
                             Assert.AreEqual(typeof(Boolean), idr.GetValue(9).GetType());
                             Assert.AreEqual(true, idr.GetValue(9));
@@ -440,7 +467,8 @@ namespace Trino.Client.Test
 
                             Assert.AreEqual(typeof(DateTimeOffset), idr.GetValue(17).GetType());
                             Assert.AreEqual(DateTimeOffset.Parse("2023-04-04 01:02:03.004088+05:00"), idr.GetValue(17));
-                            Assert.AreEqual("timestamp_with_timezone_column_precision6", tableWithSchema.Columns[17].ToString());
+                            Assert.AreEqual("timestamp_with_timezone_column_precision6",
+                                tableWithSchema.Columns[17].ToString());
 
                             Assert.AreEqual(typeof(DateTimeOffset), idr.GetValue(18).GetType());
                             Assert.AreEqual(DateTimeOffset.Parse("2023-04-04 01:02:03.004+05:00"), idr.GetValue(18));
@@ -483,9 +511,12 @@ namespace Trino.Client.Test
                             Assert.IsTrue(((List<object>)idr.GetValue(26)).SequenceEqual(["hello", "world"]));
                             Assert.AreEqual("array_column", tableWithSchema.Columns[26].ToString());
 
-                            Assert.AreEqual(typeof(Dictionary<System.Object, System.Object>), idr.GetValue(27).GetType());
+                            Assert.AreEqual(typeof(Dictionary<System.Object, System.Object>),
+                                idr.GetValue(27).GetType());
                             Dictionary<object, object> staticDictionary = new() { { "key1", 1 }, { "key2", 2 } };
-                            Assert.IsTrue(((Dictionary<object, object>)idr.GetValue(27)).Keys.SequenceEqual(staticDictionary.Keys));
+                            Assert.IsTrue(
+                                ((Dictionary<object, object>)idr.GetValue(27)).Keys
+                                .SequenceEqual(staticDictionary.Keys));
                             Assert.AreEqual("map_column", tableWithSchema.Columns[27].ToString());
 
                             rowCount++;

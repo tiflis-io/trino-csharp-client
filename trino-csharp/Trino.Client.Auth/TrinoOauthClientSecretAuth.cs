@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Trino.Client.Utils;
 
 namespace Trino.Client.Auth
 {
@@ -70,7 +71,7 @@ namespace Trino.Client.Auth
                 response.EnsureSuccessStatusCode();
 
                 var content = await response.Content.ReadAsStringAsync();
-                return Newtonsoft.Json.JsonConvert.DeserializeObject<TokenResponse>(content);
+                return Newtonsoft.Json.JsonConvert.DeserializeObject<TokenResponse>(content, DefaultJsonSerializerOptions.Instance);
             }
         }
 
